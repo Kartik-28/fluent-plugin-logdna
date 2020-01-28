@@ -1,6 +1,37 @@
 require 'fluent/output'
 
 module Fluent
+
+  class LogDNAConnection
+
+    attr_reader :http
+  
+    def initialize(endpoint, connect_timeout, proxy_uri)
+      @endpoint = endpoint
+      create_http_client(connect_timeout, proxy_uri)
+    end
+  
+    def publish(raw_data)
+      response = http.post(@endpoint, raw_data, request_headers(api_key,content_type))
+      unless response.ok?
+        raise RuntimeError, "Failed to send data to HTTP Source. #{response.code} - #{response.body}"
+      end
+    end
+  
+    def request_headers(api_key,content_type)
+      headers = {
+          'apikey'     => api_key,
+          'content-type' => content_type
+      }
+      return headers
+    end
+  
+    def create_http_client(connect_timeout, proxy_uri)
+      @http                        = HTTPClient.new(proxy_uri)
+      @http.connect_timeout        = connect_timeout
+    end
+  end
+
   class LogDNAOutput < Fluent::BufferedOutput
     Fluent::Plugin.register_output('logdna', self)
 
@@ -17,6 +48,7 @@ module Fluent
     def configure(conf)
       super
       @host = conf['hostname']
+      
     end
 
     def start
@@ -27,6 +59,7 @@ module Fluent
       HTTP.default_options = { :keep_alive_timeout => 60 }
       @ingester = HTTP.persistent @ingester_domain
       @requests = Queue.new
+      
     end
 
     def shutdown
