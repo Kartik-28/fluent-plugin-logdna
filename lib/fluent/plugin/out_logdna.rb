@@ -1,4 +1,6 @@
 require 'fluent/output'
+require 'net/https'
+require 'httpclient'
 
 module Fluent
 
