@@ -6,13 +6,13 @@ module Fluent
 
     attr_reader :http
   
-    def initialize(endpoint, proxy_uri)
+    def initialize(proxy_uri)
       @endpoint = endpoint
       create_http_client(proxy_uri)
     end
   
-    def publish(raw_data,api_key,content_type)
-      response = http.post(@endpoint, raw_data, request_headers(api_key,content_type))
+    def publish(url,raw_data,api_key,content_type)
+      response = http.post(url, raw_data, request_headers(api_key,content_type))
       unless response.ok?
         raise RuntimeError, "Failed to send data to HTTP Source. #{response.code} - #{response.body}"
       end
@@ -49,7 +49,7 @@ module Fluent
     def configure(conf)
       super
       @host = conf['hostname']
-      @logDNA_conn = LogDNAConnection.new(conf['endpoint'],conf['proxy_uri'])
+      @logDNA_conn = LogDNAConnection.new(conf['proxy_uri'])
       
     end
 
@@ -117,7 +117,7 @@ module Fluent
       now = Time.now.to_i
       url = "/logs/ingest?hostname=#{@host}&mac=#{@mac}&ip=#{@ip}&now=#{now}"
       
-      @logDNA_conn.publish(json:body,url,'application/json')
+      @logDNA_conn.publish(url,body,@api_key,'application/json')
     end
   end
 end
