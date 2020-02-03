@@ -9,7 +9,6 @@ module Fluent
     attr_reader :http
   
     def initialize(proxy_uri)
-      @endpoint = endpoint
       create_http_client(proxy_uri)
     end
   
